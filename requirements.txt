@@ -1,0 +1,6 @@
+numpy>=1.24
+opencv-python>=4.8
+mediapipe>=0.10.13
+torch>=2.0
+torchaudio>=2.0
+scikit-learn>=1.3

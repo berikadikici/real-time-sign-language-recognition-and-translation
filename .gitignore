@@ -1,0 +1,71 @@
+# ─── Dataset'ler (50-87 GB, GitHub'a sığmaz) ────────────────────────
+data/autsl/
+data/wlasl/
+data/asl_citizen/
+data/ASL_Citizen/
+data/phoenix14t/
+data/how2sign/
+data/keypoints/
+
+# Raw archives
+*.zip
+*.tar.gz
+*.tar
+ASL_Citizen.zip
+autsl-dataset.zip
+wlasl-processed.zip
+
+# ─── Model backup'ları (relabel öncesi yedekler) ────────────────────
+*.bak
+models/*.bak
+models/*_v1_*.pt
+models/*_v1_*.json
+
+# ─── Python ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# ─── IDE / Editor ────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── Jupyter ─────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ─── Logs ────────────────────────────────────────────────────────────
+*.log
+logs/
+runs/
+wandb/
+
+# ─── Ollama / LLM cache ──────────────────────────────────────────────
+.ollama/
+*.gguf
+
+# ─── Çıktı/Test artefaktları ─────────────────────────────────────────
+output/
+results/
+figures/
+temp/
+tmp/
+
+# ─── Secrets ─────────────────────────────────────────────────────────
+.env
+.env.local
+*.key
+secrets.json
