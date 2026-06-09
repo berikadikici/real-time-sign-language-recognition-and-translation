@@ -144,6 +144,17 @@ def cmd_run(args):
         except Exception as e:
             print(f"⚠ Cümle inşası devre dışı ({e})")
 
+    # NMT çevirmen opsiyonel — dil bazlı çift seç
+    nmt = None
+    if not args.no_translate:
+        try:
+            from nmt_module import NMTTranslator
+            tgt = "en" if args.lang == "tr" else "tr"
+            nmt = NMTTranslator(source_lang=args.lang, target_lang=tgt)
+            print(f"Çeviri: {args.lang} → {tgt}")
+        except Exception as e:
+            print(f"⚠ NMT devre dışı ({e})")
+
     def on_word(word, conf):
         flag = "🇹🇷" if args.lang == "tr" else "🇬🇧"
         print(f"  {flag} {word} ({conf:.0%})")
@@ -168,9 +179,25 @@ def cmd_run(args):
             try:
                 t0 = time.time()
                 sentence = sc.construct(words)
+
+                # NMT ile çevir (varsa)
+                translation = ""
+                if nmt:
+                    try:
+                        translation = nmt.translate(sentence)
+                    except Exception as te:
+                        translation = f"(çeviri hatası: {te})"
+
                 elapsed = time.time() - t0
-                rec.set_constructed_sentence(sentence, status="done")
+                # UI'da hem cümle hem çeviri göster
+                display = sentence
+                if translation:
+                    display = f"{sentence} | {translation}"
+                rec.set_constructed_sentence(display, status="done")
+
                 print(f"  Cümle    : {sentence}  [{elapsed:.1f}s]")
+                if translation:
+                    print(f"  Çeviri   : {translation}")
             except Exception as e:
                 rec.set_constructed_sentence(f"⚠ Hata: {e}", status="error")
                 print(f"  ⚠ Cümle inşası hatası: {e}")
@@ -204,6 +231,30 @@ def cmd_test_sentence(args):
     print(f"Girdi: {args.words}")
     result = sc.construct(args.words)
     print(f"Çıktı: {result}")
+
+
+def cmd_translate(args):
+    """Kelimeleri cümle yapıp NMT ile hedef dile çevir."""
+    from sentence_constructor import SentenceConstructor
+    from nmt_module import NMTTranslator
+
+    sc = SentenceConstructor(model=args.llm, language=args.lang)
+    sentence = sc.construct(args.words)
+    print(f"Kelimeler : {args.words}")
+    print(f"Cümle     : {sentence}")
+
+    translator = NMTTranslator(source_lang=args.lang, target_lang=args.target)
+    translation = translator.translate(sentence)
+    print(f"Çeviri    : {translation}")
+
+
+def cmd_nmt_langs(_args):
+    """Desteklenen NMT dil çiftlerini listele."""
+    from nmt_module import supported_languages
+    print("Desteklenen NMT dil çiftleri:")
+    for lang in supported_languages():
+        print(f"  {lang['source']} → {lang['target']}  "
+              f"({lang['source_name']} → {lang['target_name']})")
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -249,6 +300,8 @@ def main():
                     help="Ollama model adı")
     rn.add_argument("--no-llm", action="store_true",
                     help="LLM cümle inşasını devre dışı bırak")
+    rn.add_argument("--no-translate", action="store_true",
+                    help="NMT çevirisini devre dışı bırak")
     rn.add_argument("--no-window", action="store_true",
                     help="Kamera penceresini gösterme")
 
@@ -260,6 +313,18 @@ def main():
     ts.add_argument("--llm", default="qwen2.5:3b")
     ts.add_argument("words", nargs="+")
 
+    # translate / nmt-langs
+    tn = sub.add_parser("translate",
+                        help="Kelimeleri cümle yapıp NMT ile çevir")
+    tn.add_argument("--lang", choices=["tr", "en"], default="tr",
+                    help="Kaynak dil")
+    tn.add_argument("--target", choices=["tr", "en"], default="en",
+                    help="Hedef dil")
+    tn.add_argument("--llm", default="qwen2.5:3b")
+    tn.add_argument("words", nargs="+")
+
+    sub.add_parser("nmt-langs", help="Desteklenen NMT dil çiftleri")
+
     args = p.parse_args()
 
     dispatch = {
@@ -269,6 +334,8 @@ def main():
         "status": cmd_status,
         "cameras": cmd_cameras,
         "test-sentence": cmd_test_sentence,
+        "translate": cmd_translate,
+        "nmt-langs": cmd_nmt_langs,
     }
     dispatch[args.cmd](args)
 
