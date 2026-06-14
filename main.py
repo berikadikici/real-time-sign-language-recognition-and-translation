@@ -144,12 +144,12 @@ def cmd_run(args):
         except Exception as e:
             print(f"⚠ Cümle inşası devre dışı ({e})")
 
-    # NMT çevirmen opsiyonel — dil bazlı çift seç
+    # NMT çevirmen opsiyonel — dil bazlı çift seç (tr→en, en→fr)
     nmt = None
     if not args.no_translate:
         try:
             from nmt_module import NMTTranslator
-            tgt = "en" if args.lang == "tr" else "tr"
+            tgt = "en" if args.lang == "tr" else "fr"
             nmt = NMTTranslator(source_lang=args.lang, target_lang=tgt)
             print(f"Çeviri: {args.lang} → {tgt}")
         except Exception as e:
@@ -318,8 +318,8 @@ def main():
                         help="Kelimeleri cümle yapıp NMT ile çevir")
     tn.add_argument("--lang", choices=["tr", "en"], default="tr",
                     help="Kaynak dil")
-    tn.add_argument("--target", choices=["tr", "en"], default="en",
-                    help="Hedef dil")
+    tn.add_argument("--target", choices=["en", "fr"], default="en",
+                    help="Hedef dil (tr→en veya en→fr)")
     tn.add_argument("--llm", default="qwen2.5:3b")
     tn.add_argument("words", nargs="+")
 

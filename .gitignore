@@ -69,3 +69,6 @@ tmp/
 .env.local
 *.key
 secrets.json
+
+# ─── Evaluation çıktıları ────────────────────────────────
+figures/

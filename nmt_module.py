@@ -10,31 +10,33 @@ Pipeline:
 
 Desteklenen çeviri yönleri:
     tr → en   (Türkçe → İngilizce)
-    en → tr   (İngilizce → Türkçe)
+    en → fr   (İngilizce → Fransızca)
 
 Kullanılan modeller (HuggingFace, tamamen offline çalışır):
     Helsinki-NLP/opus-mt-tc-big-tr-en
-    Helsinki-NLP/opus-mt-en-tr
+    Helsinki-NLP/opus-mt-en-fr
 
 Kurulum:
     pip install transformers sentencepiece sacremoses
 
 Kullanım:
-    from nmt_module import NMTPipeline
+    from nmt_module import NMTTranslator
 
-    pipe = NMTPipeline(source_lang="tr", target_lang="en")
-    result = pipe.translate_glosses(["ben", "ev", "git"])
-    # → {"glosses": "ben ev git", "sentence": "Ben eve gidiyorum.", "translation": "I am going home."}
-
-    # Sadece çeviri (hazır cümle varsa):
-    pipe.translate_sentence("Ben eve gidiyorum.")
+    # Türkçe → İngilizce
+    t = NMTTranslator(source_lang="tr", target_lang="en")
+    t.translate("Ben eve gidiyorum.")
     # → "I am going home."
+
+    # İngilizce → Fransızca
+    t = NMTTranslator(source_lang="en", target_lang="fr")
+    t.translate("I am going home.")
+    # → "Je vais à la maison."
 """
 from __future__ import annotations
 import re
 from typing import Optional
 
-# ── Gloss → Cümle: kural tabanlı + isteğe bağlı Ollama ───────────────────────
+# ── Gloss → Cümle few-shot örnekler (sentence_constructor.py için referans) ──
 
 FEW_SHOT_TR = [
     ("sen kitap okumak",         "Sen kitap okuyorsun."),
@@ -56,17 +58,33 @@ FEW_SHOT_EN = [
     ("she sick be",              "She is sick."),
 ]
 
+FEW_SHOT_FR = [
+    ("tu livre lire",                  "Tu lis un livre."),
+    ("nous nourriture manger vouloir", "Nous voulons manger."),
+    ("je maison aller",                "Je vais à la maison."),
+    ("il musique écouter aimer",       "Il aime écouter de la musique."),
+    ("nous école aller falloir",       "Nous devons aller à l'école."),
+    ("tu aide demander",               "Tu demandes de l'aide."),
+    ("je eau boire",                   "Je bois de l'eau."),
+    ("elle malade être",               "Elle est malade."),
+    ("je toi voir vouloir",            "Je veux te voir."),
+    ("nous heureux être",              "Nous sommes heureux."),
+]
+
 # ── NMT Çevirmen ──────────────────────────────────────────────────────────────
 
 # HuggingFace model eşleşmeleri
 _MODEL_MAP = {
     ("tr", "en"): "Helsinki-NLP/opus-mt-tc-big-tr-en",
-    ("en", "tr"): "Helsinki-NLP/opus-mt-en-tr"
+    ("en", "fr"): "Helsinki-NLP/opus-mt-en-fr",
 }
 
 _LANG_NAMES = {
-    "tr": "Türkçe", "en": "İngilizce"
+    "tr": "Türkçe",
+    "en": "İngilizce",
+    "fr": "Fransızca",
 }
+
 
 class NMTTranslator:
     """
@@ -142,6 +160,7 @@ class NMTTranslator:
                                               num_beams=4, early_stopping=True)
         return [self._tokenizer.decode(t, skip_special_tokens=True) for t in translated]
 
+
 # ── Desteklenen diller ────────────────────────────────────────────────────────
 
 def supported_languages() -> list[dict]:
@@ -169,7 +188,8 @@ if __name__ == "__main__":
 
     if a.list_langs:
         for lang in supported_languages():
-            print(f"  {lang['source']} → {lang['target']}")
+            print(f"  {lang['source']} → {lang['target']}  "
+                  f"({lang['source_name']} → {lang['target_name']})")
         raise SystemExit(0)
 
     words = a.words or ["ben", "ev", "gitmek"]
